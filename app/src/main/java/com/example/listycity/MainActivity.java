@@ -2,11 +2,7 @@ package com.example.listycity;
 
 import android.os.Bundle;
 import android.util.SparseBooleanArray;
-import android.view.ActionMode;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,23 +17,28 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements EditCityFragment.EditCityDialogListener {
     ListView city_list;
-    ArrayAdapter<String> city_adp;
-    ArrayList<String> data_list;
+    ArrayAdapter<City> city_adp;
+    ArrayList<City> data_list;
     Button add_city_btn;
     Button rmv_city_btn;
     LinearLayout confirm_add_view;
     Button confirm_add_btn;
     EditText city_name;
+    EditText province_name;
     LinearLayout confirm_rmv_view;
     Button confirm_rmv_btn;
     TextView selected_count;
+    int selected_position;
+
+    @Override
+    public void editCity(City city) {
+        data_list.set(selected_position, city);
+        city_adp.notifyDataSetChanged();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,28 +58,34 @@ public class MainActivity extends AppCompatActivity {
         confirm_add_view = findViewById(R.id.confirm_add_view);
         confirm_add_btn = confirm_add_view.findViewById(R.id.confirm_add_btn);
         city_name = confirm_add_view.findViewById(R.id.city_name);
+        province_name = confirm_add_view.findViewById(R.id.province_name);
 
         confirm_rmv_view = findViewById(R.id.confirm_rmv_view);
         confirm_rmv_btn = confirm_rmv_view.findViewById(R.id.confirm_rmv_btn);
         selected_count = confirm_rmv_view.findViewById(R.id.selected_count);
 
-        String[] cities = {
-                "Edmonton", "Vancouver", "Moscow", "Sydney", "Berlin",
-                "Vienna", "Tokyo", "Beijing", "Osaka", "New Delhi"
-        };
+        String[] cities = {"Edmonton", "Vancouver", "Toronto"};
+        String[] provinces = {"AB", "BC", "ON"};
 
-        data_list = new ArrayList<String>();
-        data_list.addAll(Arrays.asList(cities));
-        city_adp = new ArrayAdapter<String>(this, R.layout.content, data_list);
+        data_list = new ArrayList<City>();
+        for (int i = 0; i < cities.length; i++) {
+            data_list.add(new City(cities[i], provinces[i]));
+        }
+        city_adp = new CityArrayAdapter(this, R.layout.content, data_list);
         city_list.setAdapter(city_adp);
 
-        city_list.setOnItemClickListener((a, b, c, d) -> {
+        city_list.setOnItemClickListener((a, b, pos, d) -> {
             selected_count.setText(String.format(Locale.ROOT, "Selected: %d", city_list.getCheckedItemCount()));
+            if (city_list.getChoiceMode() != ListView.CHOICE_MODE_MULTIPLE) {
+                selected_position = pos;
+                EditCityFragment.newInstance(data_list.get(pos)).show(getSupportFragmentManager(), "EDIT_CITY");
+            }
+            city_adp.notifyDataSetChanged();
         });
 
         add_city_btn.setOnClickListener((View v) -> enableAddChoice());
         confirm_add_btn.setOnClickListener((View v) -> {
-            data_list.add(city_name.getText().toString());
+            data_list.add(new City(city_name.getText().toString(), province_name.getText().toString()));
             city_adp.notifyDataSetChanged();
             disableAddChoice();
         });
@@ -106,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void enableRmvChoice() {
         disableAddChoice();
-        city_adp = new ArrayAdapter<String>(this, R.layout.list_item_rmv_mode, data_list);
+        city_adp = new CityArrayAdapter(this, R.layout.list_item_rmv_mode, data_list);
         city_list.setAdapter(city_adp);
         city_list.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         selected_count.setText(String.format(Locale.ROOT, "Selected: %d", city_list.getCheckedItemCount()));
@@ -119,7 +126,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void disableRmvChoice() {
-        city_adp = new ArrayAdapter<String>(this, R.layout.content, data_list);
+        city_adp = new CityArrayAdapter(this, R.layout.content, data_list);
         city_list.setAdapter(city_adp);
         city_list.setChoiceMode(ListView.CHOICE_MODE_NONE);
         confirm_rmv_view.setVisibility(View.GONE);
