@@ -1,6 +1,7 @@
 package com.example.listycity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -16,10 +17,18 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity implements EditCityFragment.EditCityDialogListener {
+    FirebaseFirestore db;
+    CollectionReference cities_ref;
     ListView city_list;
     ArrayAdapter<City> city_adp;
     ArrayList<City> data_list;
@@ -64,13 +73,11 @@ public class MainActivity extends AppCompatActivity implements EditCityFragment.
         confirm_rmv_btn = confirm_rmv_view.findViewById(R.id.confirm_rmv_btn);
         selected_count = confirm_rmv_view.findViewById(R.id.selected_count);
 
-        String[] cities = {"Edmonton", "Vancouver", "Toronto"};
-        String[] provinces = {"AB", "BC", "ON"};
+
+//        String[] cities = {"Edmonton", "Vancouver", "Toronto"};
+//        String[] provinces = {"AB", "BC", "ON"};
 
         data_list = new ArrayList<City>();
-        for (int i = 0; i < cities.length; i++) {
-            data_list.add(new City(cities[i], provinces[i]));
-        }
         city_adp = new CityArrayAdapter(this, R.layout.content, data_list);
         city_list.setAdapter(city_adp);
 
@@ -83,10 +90,30 @@ public class MainActivity extends AppCompatActivity implements EditCityFragment.
             city_adp.notifyDataSetChanged();
         });
 
+        db = FirebaseFirestore.getInstance();
+        cities_ref = db.collection("cities");
+
+        cities_ref.addSnapshotListener(this, (value, error) -> {
+            if (error != null) {
+                Log.e("Firestore", error.toString());
+                return;
+            }
+            if (value == null) return;
+
+            data_list.clear();
+            for (QueryDocumentSnapshot snapshot : value) {
+                data_list.add(new City(snapshot.getString("_name"), snapshot.getString("_province")));
+            }
+            city_adp.notifyDataSetChanged();
+        });
+
         add_city_btn.setOnClickListener((View v) -> enableAddChoice());
         confirm_add_btn.setOnClickListener((View v) -> {
-            data_list.add(new City(city_name.getText().toString(), province_name.getText().toString()));
-            city_adp.notifyDataSetChanged();
+            City city = new City(city_name.getText().toString(), province_name.getText().toString());
+
+            cities_ref.document(city.get_name()).set(city).addOnFailureListener((error) -> {
+                Log.w("Firestore", error.toString());
+            });
             disableAddChoice();
         });
 
@@ -100,10 +127,15 @@ public class MainActivity extends AppCompatActivity implements EditCityFragment.
     }
 
     private void deleteCheckedItems(SparseBooleanArray check_selected) {
-        for (int i = data_list.size() - 1; i >= 0; --i) {
+        WriteBatch batch = db.batch();
+        for (int i = 0; i < data_list.size(); ++i) {
             if (!check_selected.get(i)) continue;
-            data_list.remove(i);
+            batch.delete(cities_ref.document(data_list.get(i).get_name()));
         }
+
+        batch.commit().addOnFailureListener((error) -> {
+            Log.w("Firestore", error.toString());
+        });
     }
 
     private void enableAddChoice() {
@@ -122,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements EditCityFragment.
 
     private void disableAddChoice() {
         city_name.setText("");
+        province_name.setText("");
         confirm_add_view.setVisibility(View.GONE);
     }
 
