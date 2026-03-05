@@ -34,11 +34,21 @@ android {
 }
 
 dependencies {
+    implementation(files("/home/mfareed/Android/Sdk/platforms/android-36/android.jar"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
+
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    testImplementation(libs.junit)
+//    testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+}
+
+tasks.withType<Test>{
+    useJUnitPlatform()
 }
