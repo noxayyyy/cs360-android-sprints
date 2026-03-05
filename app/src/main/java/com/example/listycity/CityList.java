@@ -27,9 +27,40 @@ public class CityList {
      *
      * @return Return the sorted list
      */
-    public List<City> getCities() {
+    public List<City> get_cities() {
         List<City> list = cities;
         Collections.sort(list);
         return list;
+    }
+
+    /**
+     * This checks if a given city is contained in the list
+     *
+     * @param city The city to check
+     * @return true if city is in the list, false otherwise
+     */
+    public boolean has_city(City city) {
+        return cities.contains(city);
+    }
+
+    /**
+     * Delete a given city if present in the list
+     *
+     * @param city The city to delete
+     * @throws Exception City is not present in list
+     */
+    public void delete(City city) throws Exception {
+        if (!cities.remove(city)) {
+            throw new Exception("City to delete not found.");
+        }
+    }
+
+    /**
+     * Return total count of cities in the list
+     *
+     * @return Size of cities list
+     */
+    public int count_cities() {
+        return cities.size();
     }
 }
