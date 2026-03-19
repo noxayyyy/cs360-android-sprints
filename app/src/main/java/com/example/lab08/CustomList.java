@@ -18,7 +18,13 @@ public class CustomList {
         return cities.contains(city);
     }
 
+    public void delete(City city) throws Exception {
+        if (!cities.remove(city)) {
+            throw new Exception("City to delete not found.");
+        }
+    }
 
-    // Will be implemented later using TDD (leave blank for now)
-    // public boolean hasCity(City city) { ... }
+    public List<City> get_cities() {
+        return cities;
+    }
 }
