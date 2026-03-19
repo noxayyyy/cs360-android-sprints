@@ -40,7 +40,7 @@ public class CustomListTest {
     @Test
     void testCountCities() {
         CustomList list = new CustomList();
-        list.addCity(mockCity);
+        list.addCity(mockCity());
         assertEquals(1, list.count_cities());
 
         try {

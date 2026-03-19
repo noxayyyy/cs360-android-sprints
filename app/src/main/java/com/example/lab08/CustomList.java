@@ -27,4 +27,8 @@ public class CustomList {
     public List<City> get_cities() {
         return cities;
     }
+
+    public int count_cities() {
+        return cities.size();
+    }
 }
