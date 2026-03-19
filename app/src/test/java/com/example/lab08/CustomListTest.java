@@ -36,4 +36,23 @@ public class CustomListTest {
         exception = assertThrows(Exception.class, () -> list.delete(new City("false", "false")));
         assertEquals("City to delete not found.", exception.getMessage());
     }
+
+    @Test
+    void testCountCities() {
+        CustomList list = new CustomList();
+        list.addCity(mockCity);
+        assertEquals(1, list.count_cities());
+
+        try {
+            list.delete(mockCity());
+        } catch (Exception e) {
+            fail("Failed to find city to delete.");
+        }
+        assertEquals(0, list.count_cities());
+
+        for (int i = 0; i < 10; i++) {
+            list.addCity(new City(String.format("City%d", i), String.format("Province%d", i)));
+        }
+        assertEquals(10, list.count_cities());
+    }
 }
